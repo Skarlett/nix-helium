@@ -12,6 +12,7 @@ in
     domain = lib.mkOption {
       type = lib.types.nonEmptyStr;
     };
+
     secrets = {
       coturn = lib.mkOption { type = lib.types.path; };
       matrixRegistration = lib.mkOption { type = lib.types.path; };
@@ -21,6 +22,17 @@ in
   config = lib.mkIf cfg.enable {
     services.postgresql = {
       enable = true;
+      ensureUsers = [
+        {
+          name = "matrix-synapse";
+          ensureDBOwnership = true;
+        }
+      ];
+
+      ensureDatabases = {
+        matrix-synapse = [ "matrix-synapse" ];
+      };
+
       initialScript = pkgs.writeText "init-sql-script" ''
         CREATE USER "matrix-synapse";
         CREATE DATABASE "matrix-synapse"
@@ -31,12 +43,15 @@ in
           OWNER "matrix-synapse";
       '';
     };
+
     services.matrix-synapse = {
       enable = true;
+      extras = [ "user-search" ];
       extraConfigFiles = [
         cfg.secrets.coturn
         cfg.secrets.matrixRegistration
       ];
+
       settings = {
         enable_registration = true;
         database_type = "psycopg2";
