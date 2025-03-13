@@ -44,11 +44,25 @@ in
       ((pkgs.formats.yaml { }).generate "config.yaml" config.services.soft-serve.settings)
     ];
 
+    services.postgres = {
+      ensureDatabases.soft_serve = [ "soft_serve" ];
+      ensureUsers = [
+        {
+          name = "soft_serve";
+          ensureDBOwnership = true;
+        }
+      ];
+    };
+
     services.soft-serve = {
       enable = true;
       settings = {
         name = "computer club repos";
         log_format = "text";
+        db = {
+          driver = "postgres"; #5432
+          data_source = "postgres://postgres@localhost:${builtins.toString config.services.postgres.port}/soft_serve?sslmode=disable";
+        };
         ssh = {
           listen_addr = ":${builtins.toString cfg.port}";
           public_url = "ssh://${cfg.domain}:${builtins.toString cfg.port}";

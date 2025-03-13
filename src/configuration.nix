@@ -18,6 +18,8 @@ in
       sky = true;
       lunarix = true;
     };
+
+    soft-serve.enable = true;
   };
   # MBR
   boot.loader.grub = {
